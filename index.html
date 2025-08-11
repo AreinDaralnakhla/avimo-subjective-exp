@@ -329,7 +329,7 @@
 
   <script>
     // ---------- CONFIG ----------
-    const APPS_SCRIPT_POST_URL = 'https://script.google.com/macros/s/AKfycbyx0vIh1spzHzcRGN--a1uDcBpspx7TdWkjmyZRghgkTHRKTAQhyEatMne0S3Uovjx1/exec';
+    const APPS_SCRIPT_POST_URL = 'https://script.google.com/macros/s/AKfycbwsmdLEm9lyJSIl-XxeBEi6SfZtNHGnl7WwZMzpRbJubNg5zY4vMnoldKw7bxOuxf7o/exec';
     const TEST_MODE = false; // Set to false when using real Apps Script URL
 
     // ---------- Form logic ----------
@@ -457,7 +457,7 @@
         const res = await fetch(APPS_SCRIPT_POST_URL, {
           method: 'POST',
           mode: 'cors',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Avoid CORS preflight
           body: JSON.stringify(payload),
         });
         
