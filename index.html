@@ -426,7 +426,7 @@
       submitBtn.textContent = 'Submitting…';
       try {
         if (TEST_MODE) {
-          // Test mode - just log the data
+          // Test mode - just log the data and skip network request
           console.log('=== FORM SUBMISSION (TEST MODE) ===');
           console.log(JSON.stringify(payload, null, 2));
           
@@ -436,6 +436,18 @@
           submitStatus.textContent = 'Test submission successful! Check browser console for data.';
           submitStatus.className = 'ml-3 text-sm text-blue-600';
           submitBtn.disabled = true;
+          
+          // Create a downloadable file with the data
+          const dataStr = JSON.stringify(payload, null, 2);
+          const dataBlob = new Blob([dataStr], {type: 'application/json'});
+          const url = URL.createObjectURL(dataBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `avimo-response-${Date.now()}.json`;
+          link.textContent = 'Download your response';
+          link.className = 'ml-3 text-blue-600 underline';
+          submitStatus.appendChild(link);
+          
           return;
         }
         
