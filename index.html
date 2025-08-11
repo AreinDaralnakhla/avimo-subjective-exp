@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AViMO: Subjective Evaluation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* keep videos responsive */
+    .video-frame { aspect-ratio: 16 / 9; }
+    canvas { outline: none; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <main class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Header -->
+    <header class="mb-8">
+      <h1 class="text-2xl sm:text-3xl font-bold">Brief Subjective Evaluation of Final 3D Avatar</h1>
+      <p class="mt-2 text-gray-600">
+        You'll review a single reconstructed 3D avatar by our AViMO pipeline. First, you'll see the original dancer's motion video
+        for context; then you'll evaluate the reconstructed avatar in an interactive A-pose (static) viewer; and finally,
+        you'll evaluate the reconstructed motion video. Please rate realism and faithfulness on 1–5 scales.
+        Estimated time: ~2–4 minutes.
+      </p>
+    </header>
+
+    <!-- Consent -->
+    <section class="mb-8 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Consent</h2>
+      <p class="text-gray-600 mb-4">
+        Your participation is voluntary and anonymous. Responses will be used for research purposes only.
+      </p>
+      <label class="inline-flex items-start gap-3">
+        <input id="consent" type="checkbox" class="mt-1 w-5 h-5 border-gray-300 rounded" />
+        <span>I agree to participate in this study.</span>
+      </label>
+    </section>
+
+    <!-- Participant Background -->
+    <section class="mb-8 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Participant Background</h2>
+
+      <div class="grid sm:grid-cols-2 gap-5">
+        <!-- Field of Work / Study -->
+        <div>
+          <label class="block font-medium mb-2">Field of work / study <span class="text-red-500">*</span></label>
+          <select id="field" class="w-full rounded-lg border-gray-300" required>
+            <option value="">Select…</option>
+            <option>Computer Graphics / Animation</option>
+            <option>Computer Vision / AI</option>
+            <option>Engineering</option>
+            <option>Arts / Design</option>
+            <option>Humanities / Social Sciences</option>
+            <option>Other</option>
+          </select>
+          <input id="fieldOther" type="text" class="mt-2 w-full rounded-lg border-gray-300 hidden" placeholder="Please specify…" />
+        </div>
+
+        <!-- Highest Level of Education -->
+        <div>
+          <label class="block font-medium mb-2">Highest level of education <span class="text-red-500">*</span></label>
+          <select id="education" class="w-full rounded-lg border-gray-300" required>
+            <option value="">Select…</option>
+            <option>High School</option>
+            <option>Bachelor's Degree</option>
+            <option>Master's Degree</option>
+            <option>Doctorate (PhD)</option>
+            <option>Other</option>
+          </select>
+          <input id="educationOther" type="text" class="mt-2 w-full rounded-lg border-gray-300 hidden" placeholder="Please specify…" />
+        </div>
+
+        <!-- Current Role -->
+        <div>
+          <label class="block font-medium mb-2">Current role <span class="text-red-500">*</span></label>
+          <select id="role" class="w-full rounded-lg border-gray-300" required>
+            <option value="">Select…</option>
+            <option>Student (Undergraduate)</option>
+            <option>Student (Master's / Doctorate)</option>
+            <option>Academic / Researcher</option>
+            <option>Industry Professional (Technical)</option>
+            <option>Industry Professional (Non-technical)</option>
+            <option>Other</option>
+          </select>
+          <input id="roleOther" type="text" class="mt-2 w-full rounded-lg border-gray-300 hidden" placeholder="Please specify…" />
+        </div>
+
+        <!-- Experience -->
+        <div>
+          <label class="block font-medium mb-2">Experience with 3D models / avatars (optional)</label>
+          <select id="experience" class="w-full rounded-lg border-gray-300">
+            <option value="">Select…</option>
+            <option>None</option>
+            <option>Beginner (e.g., casual viewing / minimal editing)</option>
+            <option>Intermediate (e.g., coursework / basic 3D design)</option>
+            <option>Advanced (e.g., professional work / research)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: Monocular Input (Video) -->
+    <section class="mb-8 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Monocular Video Input</h2>
+      <div class="mb-3 text-gray-600">
+        This is the original monocular video input used to reconstruct the 3D avatar. Please watch to understand the source material.
+      </div>
+      <div class="rounded-xl overflow-hidden bg-black mb-5">
+        <video id="videoInput" class="w-full video-frame" controls playsinline src="video.mp4"></video>
+      </div>
+    </section>
+
+    <!-- Section: A-pose (Interactive PLY) -->
+    <section class="mb-8 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">A-pose (Static) — Interactive 3D</h2>
+      <div class="mb-3 text-gray-600">
+        Now that you've seen the original dancer, evaluate the reconstructed avatar in A-pose. 
+        Rotate / zoom the avatar below (mouse: drag = orbit, wheel = zoom, right-drag = pan).
+      </div>
+      <div id="viewer" class="w-full h-[420px] bg-gray-100 rounded-xl mb-5"></div>
+
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block font-medium mb-2">Face quality and details <span class="text-red-500">*</span></label>
+          <input id="faceQuality" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Poor</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Excellent</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium mb-2">Hand quality and details <span class="text-red-500">*</span></label>
+          <input id="handQuality" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Poor</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Excellent</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium mb-2">Color fidelity and accuracy <span class="text-red-500">*</span></label>
+          <input id="colorFidelity" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Inaccurate</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Very accurate</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium mb-2">Overall body proportions <span class="text-red-500">*</span></label>
+          <input id="bodyProportions" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Unrealistic</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Very realistic</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium mb-2">Clothing/texture details <span class="text-red-500">*</span></label>
+          <input id="clothingDetails" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Poor</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Excellent</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium mb-2">Identity consistency with original <span class="text-red-500">*</span></label>
+          <input id="identityConsistency" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Not consistent</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Very consistent</span>
+          </div>
+        </div>
+      </div>
+
+      <label class="block font-medium mt-4 mb-2">Comments on A-pose reconstruction (optional)</label>
+      <textarea id="commentsStatic" rows="3" class="w-full rounded-lg border-gray-300" placeholder="Please describe any specific issues or notable quality aspects you observed..."></textarea>
+    </section>
+
+    <!-- Section: Original Motion (Video) -->
+    <section class="mb-8 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Reconstructed Motion - 2D Video</h2>
+      <div class="mb-3 text-gray-600">
+        This shows the reconstructed avatar animated with the original motion from the monocular input. 
+        Please evaluate the motion quality and naturalness.
+      </div>
+      <div class="rounded-xl overflow-hidden bg-black mb-5">
+        <video id="videoOriginal" class="w-full video-frame" controls playsinline src="original-motion.mp4"></video>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-5">
+        <div>
+          <label class="block font-medium mb-2">Movement naturalness <span class="text-red-500">*</span></label>
+          <input id="naturalnessOwn" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Unnatural</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Very natural</span>
+          </div>
+        </div>
+        <div>
+          <label class="block font-medium mb-2">Preservation of original motion <span class="text-red-500">*</span></label>
+          <input id="preservationOwn" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Poor</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Excellent</span>
+          </div>
+        </div>
+        <div>
+          <label class="block font-medium mb-2">Animation smoothness <span class="text-red-500">*</span></label>
+          <input id="smoothnessOwn" type="range" min="1" max="5" step="1" class="w-full" />
+          <div class="grid grid-cols-5 text-xs text-gray-500 mt-1">
+            <span class="text-center">1<br>Jerky</span>
+            <span class="text-center">2</span>
+            <span class="text-center">3</span>
+            <span class="text-center">4</span>
+            <span class="text-center">5<br>Smooth</span>
+          </div>
+        </div>
+      </div>
+
+      <label class="block font-medium mt-4 mb-2">Comments on original motion (optional)</label>
+      <textarea id="commentsOwn" rows="3" class="w-full rounded-lg border-gray-300" placeholder="Please describe any specific issues or notable quality aspects you observed..."></textarea>
+    </section>
+
+    <!-- Submit -->
+    <section class="mb-16 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Submit</h2>
+      <p class="text-gray-600 mb-4">Please confirm all required sliders (1–5) are set.</p>
+      <button id="submitBtn"
+              class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gray-900 text-white hover:bg-gray-800 active:bg-gray-700">
+        Submit response
+      </button>
+      <span id="submitStatus" class="ml-3 text-sm text-gray-600"></span>
+    </section>
+  </main>
+
+  <!-- Spark.js for Gaussian Splat rendering -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.174.0/three.module.js",
+        "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/0.1.8/spark.module.js",
+        "three/examples/jsm/controls/OrbitControls.js": "https://cdn.jsdelivr.net/npm/three@0.174.0/examples/jsm/controls/OrbitControls.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+    import { SplatMesh } from "@sparkjsdev/spark";
+
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const container = document.getElementById('viewer');
+      if (!container) {
+        console.error('Viewer container not found!');
+        return;
+      }
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x000000); // black background
+
+      const camera = new THREE.PerspectiveCamera(
+        60,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(0, 0, 2);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      // Orbit controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true; // smooth motion
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 1;
+      controls.maxDistance = 20;
+
+      const splatURL = "./Apose.ply";
+      const apose = new SplatMesh({ url: splatURL });
+      apose.quaternion.set(1, 0, 0, 0);
+      scene.add(apose);
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        const { clientWidth, clientHeight } = container;
+        camera.aspect = clientWidth / clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(clientWidth, clientHeight);
+      });
+
+      renderer.setAnimationLoop(() => {
+        controls.update();
+        renderer.render(scene, camera);
+      });
+    });
+  </script>
+
+  <script>
+    // ---------- CONFIG ----------
+    const APPS_SCRIPT_POST_URL = 'https://script.google.com/macros/s/AKfycbzNyqQkV_116M00rRdQbmJjTLWs5S_GfsB_l0xG5pSkGz02dtPng16UJQd3B97AYR-L/exec';
+    const TEST_MODE = false; // Set to false when using real Apps Script URL
+
+    // ---------- Form logic ----------
+    const consentEl = document.getElementById('consent');
+
+    const fieldEl = document.getElementById('field');
+    const fieldOtherEl = document.getElementById('fieldOther');
+    const educationEl = document.getElementById('education');
+    const educationOtherEl = document.getElementById('educationOther');
+    const roleEl = document.getElementById('role');
+    const roleOtherEl = document.getElementById('roleOther');
+    const experienceEl = document.getElementById('experience');
+
+    // Show "Other" text boxes dynamically
+    fieldEl.addEventListener('change', () => fieldOtherEl.classList.toggle('hidden', fieldEl.value !== 'Other'));
+    educationEl.addEventListener('change', () => educationOtherEl.classList.toggle('hidden', educationEl.value !== 'Other'));
+    roleEl.addEventListener('change', () => roleOtherEl.classList.toggle('hidden', roleEl.value !== 'Other'));
+
+    // Sliders & comments
+    const faceQualityEl = document.getElementById('faceQuality');
+    const handQualityEl = document.getElementById('handQuality');
+    const colorFidelityEl = document.getElementById('colorFidelity');
+    const bodyProportionsEl = document.getElementById('bodyProportions');
+    const clothingDetailsEl = document.getElementById('clothingDetails');
+    const identityConsistencyEl = document.getElementById('identityConsistency');
+    const commentsStaticEl = document.getElementById('commentsStatic');
+
+    const naturalnessOwnEl = document.getElementById('naturalnessOwn');
+    const preservationOwnEl = document.getElementById('preservationOwn');
+    const smoothnessOwnEl = document.getElementById('smoothnessOwn');
+    const commentsOwnEl = document.getElementById('commentsOwn');
+
+    const submitBtn = document.getElementById('submitBtn');
+    const submitStatus = document.getElementById('submitStatus');
+
+    function validate() {
+      const missing = [];
+      if (!consentEl.checked) missing.push('consent');
+      if (!fieldEl.value) missing.push('field');
+      if (!educationEl.value) missing.push('education');
+      if (!roleEl.value) missing.push('role');
+
+      if (!faceQualityEl.value) missing.push('faceQuality');
+      if (!handQualityEl.value) missing.push('handQuality');
+      if (!colorFidelityEl.value) missing.push('colorFidelity');
+      if (!bodyProportionsEl.value) missing.push('bodyProportions');
+      if (!clothingDetailsEl.value) missing.push('clothingDetails');
+      if (!identityConsistencyEl.value) missing.push('identityConsistency');
+
+      if (!naturalnessOwnEl.value) missing.push('naturalnessOwn');
+      if (!preservationOwnEl.value) missing.push('preservationOwn');
+      if (!smoothnessOwnEl.value) missing.push('smoothnessOwn');
+
+      return missing;
+    }
+
+    submitBtn.addEventListener('click', async () => {
+      submitStatus.textContent = '';
+
+      const missing = validate();
+      if (missing.length) {
+        submitStatus.textContent = 'Please complete all required fields.';
+        submitStatus.className = 'ml-3 text-sm text-red-600';
+        return;
+      }
+
+      const payload = {
+        timestamp: new Date().toISOString(),
+        consent: consentEl.checked ? 'Yes' : 'No',
+        field: fieldEl.value,
+        fieldOther: fieldOtherEl.classList.contains('hidden') ? '' : fieldOtherEl.value,
+        education: educationEl.value,
+        educationOther: educationOtherEl.classList.contains('hidden') ? '' : educationOtherEl.value,
+        role: roleEl.value,
+        roleOther: roleOtherEl.classList.contains('hidden') ? '' : roleOtherEl.value,
+        experience: experienceEl.value,
+
+        faceQuality: Number(faceQualityEl.value),
+        handQuality: Number(handQualityEl.value),
+        colorFidelity: Number(colorFidelityEl.value),
+        bodyProportions: Number(bodyProportionsEl.value),
+        clothingDetails: Number(clothingDetailsEl.value),
+        identityConsistency: Number(identityConsistencyEl.value),
+        commentsStatic: commentsStaticEl.value.trim(),
+
+        naturalnessOwn: Number(naturalnessOwnEl.value),
+        preservationOwn: Number(preservationOwnEl.value),
+        smoothnessOwn: Number(smoothnessOwnEl.value),
+        commentsOwn: commentsOwnEl.value.trim(),
+      };
+
+      // POST to Apps Script or test mode
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+      try {
+        if (TEST_MODE) {
+          // Test mode - just log the data
+          console.log('=== FORM SUBMISSION (TEST MODE) ===');
+          console.log(JSON.stringify(payload, null, 2));
+          
+          // Simulate network delay
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          submitStatus.textContent = 'Test submission successful! Check browser console for data.';
+          submitStatus.className = 'ml-3 text-sm text-blue-600';
+          submitBtn.disabled = true;
+          return;
+        }
+        
+        const res = await fetch(APPS_SCRIPT_POST_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        submitStatus.textContent = 'Thank you! Your response was recorded.';
+        submitStatus.className = 'ml-3 text-sm text-green-600';
+
+        // Optional: disable inputs
+        submitBtn.disabled = true;
+      } catch (err) {
+        console.error(err);
+        submitStatus.textContent = 'Submission failed. Please try again.';
+        submitStatus.className = 'ml-3 text-sm text-red-600';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit response';
+      }
+    });
+  </script>
+</body>
+</html>
