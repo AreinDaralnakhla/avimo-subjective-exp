@@ -474,11 +474,33 @@
         // Optional: disable inputs
         submitBtn.disabled = true;
       } catch (err) {
-        console.error(err);
-        submitStatus.textContent = 'Submission failed. Please try again.';
-        submitStatus.className = 'ml-3 text-sm text-red-600';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit response';
+        console.error('Google Apps Script failed:', err);
+        
+        // Fallback to test mode if Google Apps Script fails
+        console.log('Falling back to test mode due to Apps Script failure');
+        console.log('=== FALLBACK FORM SUBMISSION ===');
+        console.log(JSON.stringify(payload, null, 2));
+        
+        // Create downloadable file as backup
+        const dataStr = JSON.stringify(payload, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `avimo-response-${Date.now()}.json`;
+        link.click(); // Auto-download the file
+        
+        submitStatus.textContent = 'Response saved locally. Google Sheets integration failed.';
+        submitStatus.className = 'ml-3 text-sm text-orange-600';
+        submitBtn.disabled = true;
+        
+        // Add download link for manual access
+        const manualLink = document.createElement('a');
+        manualLink.href = url;
+        manualLink.download = `avimo-response-${Date.now()}.json`;
+        manualLink.textContent = ' Download backup';
+        manualLink.className = 'ml-2 text-blue-600 underline';
+        submitStatus.appendChild(manualLink);
       }
     });
   </script>
