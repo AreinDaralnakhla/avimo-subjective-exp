@@ -451,14 +451,22 @@
           return;
         }
         
+        console.log('Attempting to submit to Google Apps Script:', APPS_SCRIPT_POST_URL);
+        console.log('Payload:', JSON.stringify(payload, null, 2));
+        
         const res = await fetch(APPS_SCRIPT_POST_URL, {
           method: 'POST',
           mode: 'cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+        
+        console.log('Response status:', res.status);
+        console.log('Response ok:', res.ok);
+        
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        console.log('Response data:', data);
 
         submitStatus.textContent = 'Thank you! Your response was recorded.';
         submitStatus.className = 'ml-3 text-sm text-green-600';
